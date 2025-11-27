@@ -32,10 +32,9 @@ Implement `java.util.Map<String, Integer>` backed by Redis with:
 ```bash
 # Linux/macOS
 ./scripts/test.sh
-
-# Windows
-scripts\\test.bat
 ```
+
+On Windows, run the same steps manually (docker-compose up, `mvn test`, `mvn exec:java`).
 
 This script will:
 1. Start Redis Cluster (6 nodes: 3 masters + 3 replicas)
@@ -235,8 +234,7 @@ redis-and-collections/
 ├── infra/
 │   └── docker-compose.yml           # Redis Cluster (6 nodes)
 ├── scripts/
-│   ├── test.sh                      # Automated test runner (Linux/macOS)
-│   └── test.bat                     # Automated test runner (Windows)
+│   └── test.sh                      # Automated test runner (Linux/macOS)
 └── pom.xml                          # Maven dependencies
 ```
 
