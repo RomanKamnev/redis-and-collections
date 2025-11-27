@@ -55,7 +55,7 @@ sleep 30
 
 # Verify cluster is ready
 echo -e "${YELLOW}Verifying cluster status...${NC}"
-CLUSTER_STATE=$(docker exec infra-redis-node-1-1 redis-cli -p 7000 cluster info 2>/dev/null | grep cluster_state | cut -d: -f2 | tr -d '\r')
+CLUSTER_STATE=$(docker-compose -f infra/docker-compose.yml exec -T redis-node-1 redis-cli -p 7000 cluster info 2>/dev/null | grep cluster_state | cut -d: -f2 | tr -d '\r')
 
 if [ "$CLUSTER_STATE" != "ok" ]; then
     echo -e "${RED}Error: Redis Cluster failed to initialize${NC}"
@@ -67,7 +67,7 @@ echo -e "${GREEN}Redis Cluster is ready!${NC}\n"
 
 # Show cluster info
 echo -e "${YELLOW}Cluster Info:${NC}"
-docker exec infra-redis-node-1-1 redis-cli -p 7000 cluster nodes | head -3
+docker-compose -f infra/docker-compose.yml exec -T redis-node-1 redis-cli -p 7000 cluster nodes | head -3
 
 # Run tests
 echo -e "\n${YELLOW}Running tests...${NC}\n"
