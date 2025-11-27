@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  redis-node-1:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --port 7000
+    ports:
+      - "7000:7000"
+      - "17000:17000"
+    volumes:
+      - redis-node-1-data:/data
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.18.0.2
+
+  redis-node-2:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --port 7001
+    ports:
+      - "7001:7001"
+      - "17001:17001"
+    volumes:
+      - redis-node-2-data:/data
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.18.0.3
+
+  redis-node-3:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --port 7002
+    ports:
+      - "7002:7002"
+      - "17002:17002"
+    volumes:
+      - redis-node-3-data:/data
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.18.0.4
+
+  redis-node-4:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --port 7003
+    ports:
+      - "7003:7003"
+      - "17003:17003"
+    volumes:
+      - redis-node-4-data:/data
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.18.0.5
+
+  redis-node-5:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --port 7004
+    ports:
+      - "7004:7004"
+      - "17004:17004"
+    volumes:
+      - redis-node-5-data:/data
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.18.0.6
+
+  redis-node-6:
+    image: redis:7-alpine
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --port 7005
+    ports:
+      - "7005:7005"
+      - "17005:17005"
+    volumes:
+      - redis-node-6-data:/data
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.18.0.7
+
+  redis-cluster-init:
+    image: redis:7-alpine
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - redis-node-6
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.18.0.8
+    command:
+      - sh
+      - -c
+      - |
+        echo 'Waiting for Redis nodes to be ready...'
+        until redis-cli -h 172.18.0.2 -p 7000 ping > /dev/null 2>&1; do sleep 1; done
+        until redis-cli -h 172.18.0.3 -p 7001 ping > /dev/null 2>&1; do sleep 1; done
+        until redis-cli -h 172.18.0.4 -p 7002 ping > /dev/null 2>&1; do sleep 1; done
+        until redis-cli -h 172.18.0.5 -p 7003 ping > /dev/null 2>&1; do sleep 1; done
+        until redis-cli -h 172.18.0.6 -p 7004 ping > /dev/null 2>&1; do sleep 1; done
+        until redis-cli -h 172.18.0.7 -p 7005 ping > /dev/null 2>&1; do sleep 1; done
+        echo 'All nodes are ready. Creating cluster...'
+        redis-cli --cluster create 172.18.0.2:7000 172.18.0.3:7001 172.18.0.4:7002 172.18.0.5:7003 172.18.0.6:7004 172.18.0.7:7005 --cluster-replicas 1 --cluster-yes
+        echo 'Cluster created successfully!'
+        redis-cli -h 172.18.0.2 -p 7000 cluster info
+        redis-cli -h 172.18.0.2 -p 7000 cluster nodes
+
+volumes:
+  redis-node-1-data:
+  redis-node-2-data:
+  redis-node-3-data:
+  redis-node-4-data:
+  redis-node-5-data:
+  redis-node-6-data:
+
+networks:
+  redis-cluster-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
