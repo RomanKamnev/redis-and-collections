@@ -39,11 +39,11 @@ timeout /t 30 /nobreak >nul
 
 REM Verify cluster is ready
 echo Verifying cluster status...
-docker exec redis-and-collections-redis-node-1-1 redis-cli -p 7000 cluster info | findstr "cluster_state:ok" >nul 2>&1
+docker exec infra-redis-node-1-1 redis-cli -p 7000 cluster info | findstr "cluster_state:ok" >nul 2>&1
 if %errorlevel% neq 0 (
     echo Error: Redis Cluster failed to initialize
     echo Check logs: docker-compose -f infra/docker-compose.yml logs redis-cluster-init
-    docker-compose -f infra/docker-compose.yml down
+    docker-compose -f infra/docker-compose.yml down -v
     exit /b 1
 )
 
@@ -52,7 +52,7 @@ echo.
 
 REM Show cluster info
 echo Cluster Info:
-docker exec redis-and-collections-redis-node-1-1 redis-cli -p 7000 cluster nodes
+docker exec infra-redis-node-1-1 redis-cli -p 7000 cluster nodes
 
 REM Run tests
 echo.
@@ -62,10 +62,18 @@ call mvn test
 
 set TEST_RESULT=%errorlevel%
 
+if %TEST_RESULT% equ 0 (
+    echo.
+    echo Running demo application (mvn exec:java)...
+    echo.
+    call mvn exec:java
+    set TEST_RESULT=%errorlevel%
+)
+
 REM Cleanup
 echo.
 echo Stopping Redis Cluster...
-docker-compose -f infra/docker-compose.yml down
+docker-compose -f infra/docker-compose.yml down -v
 
 if %TEST_RESULT% equ 0 (
     echo.
